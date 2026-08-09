@@ -5,7 +5,7 @@ const path = require('path');
 require('dotenv').config();
 
 const { MongoMemoryServer } = require('mongodb-memory-server');
-
+//5445454
 const app = express();
 const PORT = 5000;
 
@@ -49,8 +49,8 @@ async function seedIfEmpty() {
                     name: "Chef Anita V.", specialty: "Awadhi Cuisine", experience: 12, locality: "Hazratganj", rate: 200, rating: 4.8,
                     avatar: "https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&q=80&w=120&h=120",
                     dishes: [
-                        "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?auto=format&fit=crop&q=80&w=400&h=300", 
-                        "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&q=80&w=400&h=300", 
+                        "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?auto=format&fit=crop&q=80&w=400&h=300",
+                        "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&q=80&w=400&h=300",
                         "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?auto=format&fit=crop&q=80&w=400&h=300"
                     ],
                     location: { type: "Point", coordinates: [80.9462, 26.8467] }
@@ -59,8 +59,8 @@ async function seedIfEmpty() {
                     name: "Chef Rohan S.", specialty: "Healthy North Indian", experience: 5, locality: "Gomti Nagar", rate: 250, rating: 4.9,
                     avatar: "https://images.unsplash.com/photo-1583394838336-acd977736f90?auto=format&fit=crop&q=80&w=120&h=120",
                     dishes: [
-                        "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400&h=300", 
-                        "https://images.unsplash.com/photo-1612240498936-65f5101365d2?auto=format&fit=crop&q=80&w=400&h=300", 
+                        "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=400&h=300",
+                        "https://images.unsplash.com/photo-1612240498936-65f5101365d2?auto=format&fit=crop&q=80&w=400&h=300",
                         "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=400&h=300"
                     ],
                     location: { type: "Point", coordinates: [80.9992, 26.8611] }
@@ -69,8 +69,8 @@ async function seedIfEmpty() {
                     name: "Chef Sangeeta R.", specialty: "Vegetarian Specialist", experience: 8, locality: "Indira Nagar", rate: 180, rating: 4.9,
                     avatar: "https://images.unsplash.com/photo-1600565193348-f74bd3c7ccdf?auto=format&fit=crop&q=80&w=120&h=120",
                     dishes: [
-                        "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?auto=format&fit=crop&q=80&w=400&h=300", 
-                        "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&q=80&w=400&h=300", 
+                        "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?auto=format&fit=crop&q=80&w=400&h=300",
+                        "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?auto=format&fit=crop&q=80&w=400&h=300",
                         "https://images.unsplash.com/photo-1605180348426-f314eb166a1b?auto=format&fit=crop&q=80&w=400&h=300"
                     ],
                     location: { type: "Point", coordinates: [80.9850, 26.8800] }
@@ -79,8 +79,8 @@ async function seedIfEmpty() {
                     name: "Chef Kabir M.", specialty: "Mughlai & Street Food", experience: 10, locality: "Aliganj", rate: 300, rating: 4.7,
                     avatar: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=120&h=120",
                     dishes: [
-                        "https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&q=80&w=400&h=300", 
-                        "https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?auto=format&fit=crop&q=80&w=400&h=300", 
+                        "https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&q=80&w=400&h=300",
+                        "https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?auto=format&fit=crop&q=80&w=400&h=300",
                         "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?auto=format&fit=crop&q=80&w=400&h=300"
                     ],
                     location: { type: "Point", coordinates: [80.9382, 26.8917] }
@@ -155,7 +155,6 @@ const conversationSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 });
 const Conversation = mongoose.model('Conversation', conversationSchema);
-
 const messageSchema = new mongoose.Schema({
     conversationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Conversation', required: true },
     sender: { type: String, enum: ['customer', 'chef', 'system'], required: true },
