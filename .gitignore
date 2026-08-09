@@ -1,0 +1,76 @@
+# ==========================================
+# Dependencies & Package Managers
+# ==========================================
+node_modules/
+/.pnp
+.pnp.js
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+package-lock.json (optional: keep if you want strict lockfile versioning)
+
+# ==========================================
+# Environment Variables & Secrets (CRITICAL)
+# ==========================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+*.key
+
+# ==========================================
+# Production & Build Outputs
+# ==========================================
+# React Frontend Build
+/client/build/
+/client/dist/
+build/
+dist/
+
+# Express/TypeScript Outputs (if applicable)
+/server/dist/
+/server/build/
+
+# ==========================================
+# Logs & Process Managers
+# ==========================================
+logs
+*.log
+npm-debug.log*
+pm2.log
+
+# ==========================================
+# IDE & System Files
+# ==========================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# VS Code / JetBrains Editors
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ==========================================
+# Testing & Coverage
+# ==========================================
+/coverage
+.nyc_output
+.jest/

@@ -1,0 +1,23 @@
+# Copilot instructions for this repo
+
+- This repo is a minimal Node.js/Express + MongoDB app with a static frontend. The backend lives in `server.js`; the browser UI is plain HTML/CSS/JS in `public/`.
+- There is no React/Vue/TypeScript build pipeline. Do not introduce one unless the task explicitly requires it.
+- Start the app with `node server.js` from the repo root. Express listens on port `5000` and serves `public/` through `express.static(...)`.
+- The app expects MongoDB at `mongodb://localhost:27017/homechef` by default, or `MONGO_URI` if provided in `.env`.
+- Seed sample cooks with `node seed.js` after MongoDB is running. The seed file also defines the `Cook` collection shape.
+- Key runtime files:
+  - `server.js`: Express setup, Mongoose connection, `Cook` schema, and `/api/cooks/nearby` route.
+  - `seed.js`: sample data and a duplicate schema definition used for local seeding.
+  - `public/index.html`: static landing page plus the client-side `fetchNearbyCooks()` render flow.
+  - `public/style.css`: all UI styling and layout rules.
+- The geospatial query is the core backend behavior: `Cook.find({ location: { $near: { $geometry: { type: 'Point', coordinates: [lng, lat] }, $maxDistance: distance * 1000 } } })`.
+- The schema uses a `2dsphere` index on `location` and stores coordinates in GeoJSON format: `[longitude, latitude]`.
+- Default search location is central Lucknow: `lng=80.9462`, `lat=26.8467`, `distance=15` km.
+- Keep `server.js` and `seed.js` schema fields in sync. Any new field added to the `Cook` model should be reflected in both files and the frontend card template.
+- The browser does not use a framework. On page load, `public/index.html` calls `fetchNearbyCooks()` and replaces the contents of `.chefs-grid` with generated HTML.
+- The frontend template expects these response fields: `name`, `specialty`, `experience`, `locality`, `rate`, `rating`, `avatar`, and `dishes`.
+- When you update the API response shape, update the render logic in `public/index.html` in the same change.
+- Styling conventions are already established in `public/style.css`: warm amber gradients, glassy header, card layouts, and Lucide icons loaded from the CDN.
+- There is no meaningful automated test suite today; `npm test` is only a placeholder. Verify backend/frontend changes by starting the server and checking the app manually.
+- Prefer small, explicit edits over introducing new abstractions. This repo is intentionally simple and minimal.
+- If you need to debug the app, start with `server.js` for API behavior, then `public/index.html` for the final rendering path shown in the browser.

@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HomeChef Connect - Find Local Cooks Nearby</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+
+<body>
+
+    <header class="site-header">
+        <div class="header-container">
+            <div class="logo-block">
+                <div class="logo-icon">
+                    <i data-lucide="chef-hat"></i>
+                </div>
+                <div class="logo-text">
+                    <span class="logo-main">HomeChef</span>
+                    <span class="logo-sub">Connect</span>
+                </div>
+            </div>
+
+            <nav class="nav-links">
+                <a href="#" class="nav-item active">Browse Cooks</a>
+                <a href="search.html" class="nav-item">Search</a>
+                <a href="chat.html" class="nav-item">My Chats 💬</a>
+            </nav>
+            <div class="header-actions" id="headerActions">
+                <button class="btn-text" onclick="openAuthModal('login')">Login</button>
+                <button class="btn-search" style="padding: 8px 18px; font-size: 13px;" onclick="openAuthModal('signup')">Sign Up</button>
+                <button class="btn-outline" style="padding: 8px 14px; font-size: 13px;" onclick="openModal('cookRegistrationModal')">Join as a Cook</button>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero-section">
+        <div class="hero-container">
+            <span class="badge-tag">
+                <i data-lucide="sparkles"></i> Verified Local Experts
+            </span>
+            <h1 class="hero-title">
+                Fresh, Home-Cooked Meals By <span>Local Chefs In Lucknow</span>
+            </h1>
+            <p class="hero-sub">Discover background-verified home cooks near you, negotiate custom menus, and enjoy authentic hygienic food at home.</p>
+
+            <div class="search-bar">
+                <div class="search-field">
+                    <i data-lucide="utensils"></i>
+                    <input type="text" id="searchInput" placeholder="Try 'Awadhi Biryani', 'North Indian', or 'Chef Anita'">
+                </div>
+
+                <div class="search-field divider">
+                    <i data-lucide="map-pin"></i>
+                    <select id="locationSelect">
+                        <option value="Hazratganj">Hazratganj, Lucknow</option>
+                        <option value="Gomti Nagar">Gomti Nagar, Lucknow</option>
+                        <option value="Indira Nagar">Indira Nagar, Lucknow</option>
+                        <option value="Aliganj">Aliganj, Lucknow</option>
+                    </select>
+                </div>
+
+                <button class="btn-search" id="searchBtn">
+                    Search Chefs <i data-lucide="arrow-right"></i>
+                </button>
+            </div>
+
+            <div class="quick-filters" id="filterChipsContainer">
+                <span class="filter-chip active" data-filter="all">All Chefs</span>
+                <span class="filter-chip" data-filter="top"><i data-lucide="star"></i> Top Rated (4.8+)</span>
+                <span class="filter-chip" data-filter="veg"><i data-lucide="leaf"></i> Pure Veg</span>
+                <span class="filter-chip" data-filter="awadhi"><i data-lucide="crown"></i> Awadhi Special</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content Section -->
+    <main class="main-container">
+        <div class="section-container">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title" id="resultsTitle">Nearby Chefs in Lucknow</h2>
+                    <p class="section-desc" id="resultsSub">Highly-rated culinary experts available around your location</p>
+                </div>
+            </div>
+
+            <div class="chefs-grid" id="chefsGrid">
+                <!-- Dynamic Chef Cards populated by fetchNearbyCooks() -->
+            </div>
+        </div>
+    </main>
+
+    <section class="cuisines-section">
+        <div class="section-container">
+            <h2 class="section-title mb-8">Popular Cuisines</h2>
+            <div class="cuisines-grid">
+                <div class="cuisine-item" data-cuisine="Awadhi">
+                    <div class="cuisine-icon"><i data-lucide="utensils"></i></div>
+                    <span class="cuisine-name">Awadhi</span>
+                </div>
+                <div class="cuisine-item" data-cuisine="Mughlai">
+                    <div class="cuisine-icon"><i data-lucide="soup"></i></div>
+                    <span class="cuisine-name">Mughlai</span>
+                </div>
+                <div class="cuisine-item" data-cuisine="North Indian">
+                    <div class="cuisine-icon"><i data-lucide="flame"></i></div>
+                    <span class="cuisine-name">North Indian</span>
+                </div>
+                <div class="cuisine-item" data-cuisine="Vegetarian">
+                    <div class="cuisine-icon"><i data-lucide="leaf"></i></div>
+                    <span class="cuisine-name">Vegetarian</span>
+                </div>
+                <div class="cuisine-item" data-cuisine="Healthy">
+                    <div class="cuisine-icon"><i data-lucide="heart-pulse"></i></div>
+                    <span class="cuisine-name">Healthy</span>
+                </div>
+                <div class="cuisine-item" data-cuisine="Street Food">
+                    <div class="cuisine-icon"><i data-lucide="store"></i></div>
+                    <span class="cuisine-name">Street Food</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Unified Customer Authentication Modal -->
+    <div class="modal-overlay" id="authModal">
+        <div class="modal-card" style="max-width: 440px;">
+            <button class="modal-close-btn" onclick="closeModal('authModal')">
+                <i data-lucide="x"></i>
+            </button>
+            
+            <div class="tab-nav mb-8">
+                <button class="tab-btn active" id="authTabCustomer" onclick="switchAuthTab('customer')">Customer Account</button>
+                <button class="tab-btn" id="authTabCook" onclick="openModal('cookRegistrationModal'); closeModal('authModal');">Join as Cook</button>
+            </div>
+
+            <!-- Prominent Google Social Login Button -->
+            <button type="button" class="btn-google-login" onclick="triggerGoogleLogin()">
+                <svg width="18" height="18" viewBox="0 0 18 18">
+                    <path fill="#4285F4" d="M17.64 9.2c0-.74-.06-1.28-.19-1.84H9v3.34h4.96c-.1.83-.64 2.08-1.84 2.92l2.84 2.2c1.7-1.57 2.68-3.88 2.68-6.62z"/>
+                    <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.84-2.2c-.76.53-1.78.9-3.12.9-2.38 0-4.41-1.57-5.13-3.72L.97 13.04C2.45 15.98 5.48 18 9 18z"/>
+                    <path fill="#FBBC05" d="M3.87 10.8c-.2-.58-.31-1.2-.31-1.8s.11-1.22.31-1.8L.97 4.96C.35 6.18 0 7.55 0 9s.35 2.82.97 4.04l2.9-2.24z"/>
+                    <path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0 5.48 0 2.45 2.02.97 4.96l2.9 2.24C4.59 5.05 6.62 3.58 9 3.58z"/>
+                </svg>
+                <span>Continue with Google</span>
+            </button>
+
+            <div class="auth-divider"><span>OR WITH EMAIL / MOBILE OTP</span></div>
+
+            <!-- Customer Sub-Toggle: Login vs Sign Up vs Phone OTP -->
+            <div style="display: flex; background: #f3f4f6; padding: 4px; border-radius: 12px; margin-bottom: 20px;">
+                <button type="button" id="subTabLogin" class="tab-btn active" style="flex: 1; padding: 8px; border-radius: 8px; font-size: 12px;" onclick="switchCustomerMode('login')">Log In</button>
+                <button type="button" id="subTabSignup" class="tab-btn" style="flex: 1; padding: 8px; border-radius: 8px; font-size: 12px;" onclick="switchCustomerMode('signup')">Sign Up</button>
+                <button type="button" id="subTabOtp" class="tab-btn" style="flex: 1; padding: 8px; border-radius: 8px; font-size: 12px;" onclick="switchCustomerMode('otp')">Mobile OTP 📱</button>
+            </div>
+
+            <!-- Customer Login Form -->
+            <form id="loginForm" class="booking-form" onsubmit="handleLoginSubmit(event)">
+                <div class="form-group">
+                    <label for="loginEmail">Email or Phone Number</label>
+                    <input type="text" id="loginEmail" placeholder="e.g. vikram@example.com or 9876543210" required>
+                </div>
+                <div class="form-group">
+                    <label for="loginPass">Password</label>
+                    <input type="password" id="loginPass" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn-search btn-full" style="margin-top: 12px;">
+                    Log In <i data-lucide="log-in"></i>
+                </button>
+            </form>
+
+            <!-- Customer Sign Up Form -->
+            <form id="signupForm" class="booking-form" style="display: none;" onsubmit="handleSignupSubmit(event)">
+                <div class="form-group">
+                    <label for="signupName">Full Name *</label>
+                    <input type="text" id="signupName" placeholder="e.g. Vikram Sharma" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupEmail">Email Address *</label>
+                    <input type="email" id="signupEmail" placeholder="e.g. vikram@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="signupPhone">Mobile Number *</label>
+                    <input type="tel" id="signupPhone" placeholder="e.g. 9876543210" required pattern="[0-9]{10}">
+                </div>
+                <div class="form-group">
+                    <label for="signupLocality">Locality in Lucknow *</label>
+                    <select id="signupLocality" required>
+                        <option value="Hazratganj">Hazratganj</option>
+                        <option value="Gomti Nagar" selected>Gomti Nagar</option>
+                        <option value="Indira Nagar">Indira Nagar</option>
+                        <option value="Aliganj">Aliganj</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="signupPass">Create Password *</label>
+                    <input type="password" id="signupPass" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn-search btn-full" style="margin-top: 12px;">
+                    Create Account <i data-lucide="user-plus"></i>
+                </button>
+            </form>
+
+            <!-- Mobile Phone SMS OTP Form -->
+            <div id="otpAuthContainer" style="display: none;">
+                <!-- Step 1: Send OTP -->
+                <div id="otpStep1">
+                    <div class="booking-form">
+                        <div class="form-group">
+                            <label for="otpPhoneInput">Mobile Phone Number (India)</label>
+                            <div class="phone-input-group">
+                                <span class="phone-prefix-badge">🇮🇳 +91</span>
+                                <input type="tel" id="otpPhoneInput" placeholder="9876543210" required pattern="[0-9]{10}">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="otpCustomerName">Your Name (Optional)</label>
+                            <input type="text" id="otpCustomerName" placeholder="e.g. Priya Singh">
+                        </div>
+                        <button type="button" id="sendOtpBtn" class="btn-search btn-full" onclick="handleSendOtp()">
+                            Send OTP Code 📩
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Enter & Verify OTP -->
+                <div id="otpStep2" style="display: none;">
+                    <div class="booking-form">
+                        <p style="font-size: 13px; color: var(--color-muted); text-align: center; margin-bottom: 8px;">
+                            Enter 6-digit code sent to <strong id="sentPhoneDisplay">+91...</strong>
+                        </p>
+                        <div class="form-group">
+                            <input type="text" id="otpCodeInput" placeholder="Enter 6-digit OTP" maxlength="6" style="font-size: 24px; letter-spacing: 6px; text-align: center; font-weight: 800;" required>
+                        </div>
+                        <div style="font-size: 12px; color: var(--color-muted); text-align: center; margin-bottom: 14px;">
+                            <span id="resendContainer">Resend OTP in <strong id="resendCountdown">30</strong>s</span>
+                            <button type="button" id="resendBtn" class="btn-text" style="display: none; font-size: 12px; font-weight: 700; color: var(--primary-amber);" onclick="handleSendOtp()">Resend OTP 📩</button>
+                        </div>
+                        <button type="button" class="btn-search btn-full highlight" onclick="handleVerifyOtp()">
+                            Verify & Log In <i data-lucide="shield-check"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Multi-step Cook Registration Modal -->
+    <div class="modal-overlay" id="cookRegistrationModal">
+        <div class="modal-card" style="max-width: 540px;">
+            <button class="modal-close-btn" onclick="closeModal('cookRegistrationModal')">
+                <i data-lucide="x"></i>
+            </button>
+            <h2 class="section-title" style="font-size: 22px; text-align: center; margin-bottom: 4px;">Join HomeChef as a Cook</h2>
+            <p class="section-desc" style="text-align: center; margin-bottom: 20px;">Start offering authentic home meals in your neighborhood</p>
+
+            <div class="step-indicator">
+                <div class="step-dot active" id="dot1">1</div>
+                <div class="step-line"></div>
+                <div class="step-dot" id="dot2">2</div>
+                <div class="step-line"></div>
+                <div class="step-dot" id="dot3">3</div>
+            </div>
+
+            <form id="cookRegisterForm" onsubmit="handleCookRegisterSubmit(event)">
+                <!-- Step 1: Personal Info -->
+                <div class="step-container active" id="step1">
+                    <div class="booking-form">
+                        <div class="form-group">
+                            <label for="regName">Full Chef Name *</label>
+                            <input type="text" id="regName" placeholder="e.g. Chef Sameer K." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="regPhone">Phone Number *</label>
+                            <input type="tel" id="regPhone" placeholder="e.g. 9876543210" required pattern="[0-9]{10}">
+                        </div>
+                        <div class="form-group">
+                            <label for="regLocality">Lucknow Locality *</label>
+                            <select id="regLocality" required>
+                                <option value="Hazratganj">Hazratganj</option>
+                                <option value="Gomti Nagar" selected>Gomti Nagar</option>
+                                <option value="Indira Nagar">Indira Nagar</option>
+                                <option value="Aliganj">Aliganj</option>
+                            </select>
+                        </div>
+                        <div class="step-actions">
+                            <div></div>
+                            <button type="button" class="btn-search" onclick="goToStep(2)">Next <i data-lucide="arrow-right"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Culinary Skills -->
+                <div class="step-container" id="step2">
+                    <div class="booking-form">
+                        <div class="form-group">
+                            <label for="regSpecialty">Primary Specialty / Cuisine *</label>
+                            <input type="text" id="regSpecialty" placeholder="e.g. Awadhi Cuisine, Mughlai, Healthy North Indian" required>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div class="form-group">
+                                <label for="regExperience">Experience (Years) *</label>
+                                <input type="number" id="regExperience" min="1" max="40" value="6" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="regRate">Hourly Rate (₹) *</label>
+                                <input type="number" id="regRate" min="100" max="2000" value="250" required>
+                            </div>
+                        </div>
+                        <div class="step-actions">
+                            <button type="button" class="btn-outline" onclick="goToStep(1)"><i data-lucide="arrow-left"></i> Back</button>
+                            <button type="button" class="btn-search" onclick="goToStep(3)">Next <i data-lucide="arrow-right"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Dish Gallery & Profile Image -->
+                <div class="step-container" id="step3">
+                    <div class="booking-form">
+                        <div class="form-group">
+                            <label for="regAvatar">Profile Avatar Image URL (Optional)</label>
+                            <input type="url" id="regAvatar" placeholder="https://images.unsplash.com/...">
+                        </div>
+                        <div class="form-group">
+                            <label>Signature Dish Image URLs (Optional)</label>
+                            <input type="url" id="regDish1" placeholder="Dish 1 Image URL" style="margin-bottom: 6px;">
+                            <input type="url" id="regDish2" placeholder="Dish 2 Image URL" style="margin-bottom: 6px;">
+                            <input type="url" id="regDish3" placeholder="Dish 3 Image URL">
+                        </div>
+                        <div class="step-actions">
+                            <button type="button" class="btn-outline" onclick="goToStep(2)"><i data-lucide="arrow-left"></i> Back</button>
+                            <button type="submit" class="btn-search">Submit & Join <i data-lucide="check"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Chef Profile Details Modal -->
+    <div class="modal-overlay" id="chefModal">
+        <div class="modal-card">
+            <button class="modal-close-btn" onclick="closeModal('chefModal')">
+                <i data-lucide="x"></i>
+            </button>
+            <div class="modal-chef-header">
+                <img id="modalChefAvatar" src="" alt="Chef" class="modal-avatar-img">
+                <div>
+                    <h3 id="modalChefName" class="modal-chef-title">Chef Name</h3>
+                    <div class="modal-tag-group">
+                        <span class="rating-badge"><i data-lucide="star"></i> <span id="modalChefRating">4.8</span></span>
+                        <span class="modal-tag" id="modalChefSpecialty">Specialty</span>
+                        <span class="modal-tag"><i data-lucide="briefcase"></i> <span id="modalChefExp">10</span> yrs exp</span>
+                        <span class="modal-tag"><i data-lucide="map-pin"></i> <span id="modalChefLocality">Locality</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-section-heading">
+                <i data-lucide="shield-check" class="icon-accent"></i> Trust & Safety Verification
+            </div>
+            <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+                <span class="fssai-shield-badge"><i data-lucide="shield-check"></i> FSSAI License: <span id="modalFssai">Verified</span></span>
+                <span class="hygiene-score-pill"><i data-lucide="sparkles"></i> Hygiene Score: <span id="modalHygiene">5.0</span> / 5</span>
+            </div>
+
+            <div class="modal-section-heading">
+                <i data-lucide="utensils-crossed" class="icon-accent"></i> Signature Dishes & Specialties
+            </div>
+            <div class="modal-gallery-grid" id="modalDishGallery">
+                <!-- Dish images injected dynamically -->
+            </div>
+
+            <div class="modal-section-heading">
+                <i data-lucide="star" class="icon-accent"></i> Customer Reviews & Taste Tags
+            </div>
+            <div id="modalReviewsList" style="margin-bottom: 16px;">
+                <!-- Reviews injected dynamically -->
+            </div>
+
+            <div class="modal-section-heading">
+                <i data-lucide="sparkles" class="icon-accent"></i> Service Highlights
+            </div>
+            <ul class="chef-highlights-list">
+                <li><i data-lucide="check-circle-2"></i> 100% Hygienic Preparation</li>
+                <li><i data-lucide="check-circle-2"></i> Authentic Local Recipes</li>
+                <li><i data-lucide="check-circle-2"></i> Customizable Spice Level</li>
+                <li><i data-lucide="check-circle-2"></i> On-Time Doorstep Cooking</li>
+            </ul>
+
+            <div class="modal-footer-action">
+                <div class="pricing-info">
+                    <span class="price-label">Hourly Rate</span>
+                    <span class="price-amount" id="modalChefRate">₹200<span class="unit">/hour</span></span>
+                </div>
+                <button class="btn-search" id="modalBookNowBtn">
+                    Contact & Negotiate <i data-lucide="message-square"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact & Inquire Form Modal -->
+    <div class="modal-overlay" id="bookingModal">
+        <div class="modal-card">
+            <button class="modal-close-btn" onclick="closeModal('bookingModal')">
+                <i data-lucide="x"></i>
+            </button>
+            <h2 class="section-title mb-8" style="font-size: 22px;">Contact & Negotiate with <span id="bookingChefName">Chef</span></h2>
+            <form id="bookingForm" class="booking-form" onsubmit="handleBookingSubmit(event)">
+                <input type="hidden" id="bookingCookId">
+                
+                <div class="form-group">
+                    <label>Select Booking Service Type</label>
+                    <div class="booking-type-options">
+                        <div class="booking-type-card active" onclick="selectBookingType(this, 'One-Time Meal Service')">
+                            <div class="booking-type-title">One-Time Meal <i data-lucide="utensils"></i></div>
+                            <div class="booking-type-desc">Standard cook session</div>
+                        </div>
+                        <div class="booking-type-card" onclick="selectBookingType(this, 'Weekly Subscription (3 Days/Wk)')">
+                            <div class="booking-type-title">Weekly (3 Days) <i data-lucide="calendar"></i></div>
+                            <div class="booking-type-desc">Recurring meal prep</div>
+                        </div>
+                        <div class="booking-type-card" onclick="selectBookingType(this, 'Weekly Subscription (6 Days/Wk)')">
+                            <div class="booking-type-title">Weekly (6 Days) <i data-lucide="repeat"></i></div>
+                            <div class="booking-type-desc">Full week chef service</div>
+                        </div>
+                        <div class="booking-type-card" onclick="selectBookingType(this, 'Batch Meal Prep Session')">
+                            <div class="booking-type-title">Batch Prep <i data-lucide="box"></i></div>
+                            <div class="booking-type-desc">Bulk freezer meals</div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="bookingTypeInput" value="One-Time Meal Service">
+                </div>
+
+                <div class="form-group">
+                    <label for="custName">Your Full Name</label>
+                    <input type="text" id="custName" placeholder="e.g. Vikram Sharma" required>
+                </div>
+                <div class="form-group">
+                    <label for="custPhone">Phone Number</label>
+                    <input type="tel" id="custPhone" placeholder="e.g. 9876543210" required pattern="[0-9]{10}">
+                </div>
+                <div class="form-group">
+                    <label for="custAddress">Service Address (in Lucknow)</label>
+                    <textarea id="custAddress" rows="2" placeholder="e.g. Flat 302, Green Park Apartments, Hazratganj" required></textarea>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label for="bookingDate">Proposed Date</label>
+                        <input type="date" id="bookingDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="bookingTime">Preferred Time Slot</label>
+                        <select id="bookingTime" required>
+                            <option value="Breakfast (8:00 AM - 10:00 AM)">Breakfast (8:00 - 10:00 AM)</option>
+                            <option value="Lunch (12:00 PM - 2:30 PM)" selected>Lunch (12:00 - 2:30 PM)</option>
+                            <option value="Dinner (7:00 PM - 9:30 PM)">Dinner (7:00 - 9:30 PM)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="custInstructions">Initial Message / Special Instructions</label>
+                    <textarea id="custInstructions" rows="2" placeholder="e.g. 4 people, less spicy food, Jain vegetarian options..."></textarea>
+                </div>
+                <button type="submit" class="btn-search btn-full">
+                    Send Message & Open Chat 💬 <i data-lucide="send"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast-notification" id="toastNotification">
+        <i data-lucide="check-circle"></i>
+        <span id="toastMessage">Action completed!</span>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+
+    <script>
+        let currentChefsData = [];
+        let activeFilter = 'all';
+        let selectedChefForBooking = null;
+        let currentStep = 1;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            renderHeaderAuthState();
+            fetchNearbyCooks(80.9462, 26.8467);
+
+            // Wire search button & enter key to redirect to search.html
+            document.getElementById('searchBtn').addEventListener('click', executeSearchRedirect);
+            document.getElementById('searchInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') executeSearchRedirect();
+            });
+
+            // Wire quick filter chips to redirect to search.html
+            document.querySelectorAll('.filter-chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    const filter = chip.getAttribute('data-filter');
+                    if (filter === 'awadhi') {
+                        window.location.href = 'search.html?query=Awadhi';
+                    } else if (filter === 'veg') {
+                        window.location.href = 'search.html?query=Vegetarian';
+                    } else if (filter === 'top') {
+                        window.location.href = 'search.html?filter=top';
+                    } else {
+                        window.location.href = 'search.html';
+                    }
+                });
+            });
+
+            // Wire cuisine item clicks to redirect to search.html
+            document.querySelectorAll('.cuisine-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const cuisine = item.getAttribute('data-cuisine');
+                    window.location.href = `search.html?cuisine=${encodeURIComponent(cuisine)}`;
+                });
+            });
+
+            // Set default date for booking form to tomorrow
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            document.getElementById('bookingDate').value = tomorrow.toISOString().split('T')[0];
+        });
+
+        function executeSearchRedirect() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (query) {
+                window.location.href = `search.html?query=${encodeURIComponent(query)}`;
+            } else {
+                window.location.href = 'search.html';
+            }
+        }
+
+        let countdownTimer = null;
+
+        function renderHeaderAuthState() {
+            const userStr = localStorage.getItem('homechef_user');
+            const actionsContainer = document.getElementById('headerActions');
+            if (userStr) {
+                const user = JSON.parse(userStr);
+                const firstName = user.name ? (user.name.split(' ')[0] || user.name) : 'User';
+                const avatarHtml = user.avatar 
+                    ? `<img src="${user.avatar}" style="width:26px; height:26px; border-radius:50%; object-fit:cover; vertical-align:middle; margin-right:4px;">`
+                    : `<span class="user-avatar-sm">${firstName.charAt(0).toUpperCase()}</span>`;
+
+                actionsContainer.innerHTML = `
+                    <div class="user-profile-badge">
+                        ${avatarHtml}
+                        <span>Hi, ${firstName} 👤</span>
+                    </div>
+                    <a href="chat.html" class="btn-text" style="font-weight: 700; color: var(--primary-amber);">My Chats 💬</a>
+                    <button class="btn-text" onclick="handleLogout()">Logout 🚪</button>
+                `;
+            } else {
+                actionsContainer.innerHTML = `
+                    <button class="btn-text" onclick="openAuthModal('login')">Login</button>
+                    <button class="btn-search" style="padding: 8px 18px; font-size: 13px;" onclick="openAuthModal('signup')">Sign Up</button>
+                    <button class="btn-outline" style="padding: 8px 14px; font-size: 13px;" onclick="openModal('cookRegistrationModal')">Join as a Cook</button>
+                `;
+            }
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function openAuthModal(mode = 'login') {
+            switchCustomerMode(mode);
+            openModal('authModal');
+        }
+
+        function switchCustomerMode(mode) {
+            const loginBtn = document.getElementById('subTabLogin');
+            const signupBtn = document.getElementById('subTabSignup');
+            const otpBtn = document.getElementById('subTabOtp');
+            const loginForm = document.getElementById('loginForm');
+            const signupForm = document.getElementById('signupForm');
+            const otpContainer = document.getElementById('otpAuthContainer');
+
+            loginBtn.classList.remove('active');
+            signupBtn.classList.remove('active');
+            otpBtn.classList.remove('active');
+            loginForm.style.display = 'none';
+            signupForm.style.display = 'none';
+            otpContainer.style.display = 'none';
+
+            if (mode === 'signup') {
+                signupBtn.classList.add('active');
+                signupForm.style.display = 'block';
+            } else if (mode === 'otp') {
+                otpBtn.classList.add('active');
+                otpContainer.style.display = 'block';
+            } else {
+                loginBtn.classList.add('active');
+                loginForm.style.display = 'block';
+            }
+            if (window.lucide) lucide.createIcons();
+        }
+
+        // Google Social Login Trigger & Callback
+        function triggerGoogleLogin() {
+            if (window.google && google.accounts && google.accounts.id) {
+                google.accounts.id.initialize({
+                    client_id: "1083928172645-mockgoogleclientid.apps.googleusercontent.com",
+                    callback: handleGoogleAuthResponse
+                });
+                google.accounts.id.prompt();
+            }
+            // Prompt simulated Google Account Picker for seamless local agent testing
+            simulateGoogleOneTap();
+        }
+
+        async function simulateGoogleOneTap() {
+            const mockGoogleUser = {
+                name: "Vikram Sharma (Google)",
+                email: "vikram.google@example.com",
+                avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=120&h=120"
+            };
+
+            try {
+                const res = await fetch('/api/auth/google', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(mockGoogleUser)
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    localStorage.setItem('homechef_user', JSON.stringify(data.user));
+                    renderHeaderAuthState();
+                    closeModal('authModal');
+                    showToast(`✨ Signed in with Google as ${data.user.name}`);
+                }
+            } catch (err) {
+                console.error('Google login error:', err);
+            }
+        }
+
+        function handleGoogleAuthResponse(response) {
+            console.log("Google JWT Credential Response:", response);
+            simulateGoogleOneTap();
+        }
+
+        // Mobile Phone SMS OTP Handlers
+        async function handleSendOtp() {
+            const rawPhone = document.getElementById('otpPhoneInput').value.trim();
+            if (!rawPhone || rawPhone.length !== 10) {
+                alert('Please enter a valid 10-digit mobile number.');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/auth/send-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone: rawPhone })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    document.getElementById('sentPhoneDisplay').textContent = data.phone;
+                    document.getElementById('otpStep1').style.display = 'none';
+                    document.getElementById('otpStep2').style.display = 'block';
+
+                    if (data.debugCode) {
+                        document.getElementById('otpCodeInput').value = data.debugCode;
+                        showToast(`📩 OTP sent! (Debug Code: ${data.debugCode})`);
+                    } else {
+                        showToast(`📩 OTP sent to ${data.phone}`);
+                    }
+
+                    startOtpCountdown();
+                } else {
+                    alert(data.error || 'Failed to send OTP.');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Server communication error.');
+            }
+        }
+
+        function startOtpCountdown() {
+            let seconds = 30;
+            const countdownEl = document.getElementById('resendCountdown');
+            const containerEl = document.getElementById('resendContainer');
+            const resendBtn = document.getElementById('resendBtn');
+
+            containerEl.style.display = 'inline';
+            resendBtn.style.display = 'none';
+
+            if (countdownTimer) clearInterval(countdownTimer);
+
+            countdownTimer = setInterval(() => {
+                seconds--;
+                countdownEl.textContent = seconds;
+                if (seconds <= 0) {
+                    clearInterval(countdownTimer);
+                    containerEl.style.display = 'none';
+                    resendBtn.style.display = 'inline';
+                }
+            }, 1000);
+        }
+
+        async function handleVerifyOtp() {
+            const rawPhone = document.getElementById('otpPhoneInput').value.trim();
+            const otpCode = document.getElementById('otpCodeInput').value.trim();
+            const name = document.getElementById('otpCustomerName').value.trim();
+
+            if (!otpCode || otpCode.length !== 6) {
+                alert('Please enter the 6-digit OTP code.');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/auth/verify-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone: rawPhone, otp: otpCode, name })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    localStorage.setItem('homechef_user', JSON.stringify(data.user));
+                    renderHeaderAuthState();
+                    closeModal('authModal');
+                    showToast(`📱 Mobile OTP Verified! Welcome ${data.user.name}`);
+                } else {
+                    alert(data.error || 'OTP verification failed.');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Connection error during OTP verification.');
+            }
+        }
+
+        async function handleLoginSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPass').value;
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    localStorage.setItem('homechef_user', JSON.stringify(data.user));
+                    renderHeaderAuthState();
+                    closeModal('authModal');
+                    document.getElementById('loginForm').reset();
+                    showToast(`Welcome back, ${data.user.name}!`);
+                } else {
+                    alert(data.error || 'Login failed.');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Server error during login.');
+            }
+        }
+
+        async function handleSignupSubmit(e) {
+            e.preventDefault();
+            const name = document.getElementById('signupName').value.trim();
+            const email = document.getElementById('signupEmail').value.trim();
+            const phone = document.getElementById('signupPhone').value.trim();
+            const locality = document.getElementById('signupLocality').value;
+            const password = document.getElementById('signupPass').value;
+
+            try {
+                const res = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, phone, locality, password })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    localStorage.setItem('homechef_user', JSON.stringify(data.user));
+                    renderHeaderAuthState();
+                    closeModal('authModal');
+                    document.getElementById('signupForm').reset();
+                    showToast(`Account created successfully! Welcome, ${name}.`);
+                } else {
+                    alert(data.error || 'Sign up failed.');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Server error during sign up.');
+            }
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('homechef_user');
+            renderHeaderAuthState();
+            showToast('Logged out successfully.');
+        }
+
+        function goToStep(step) {
+            if (step === 2) {
+                const name = document.getElementById('regName').value.trim();
+                const phone = document.getElementById('regPhone').value.trim();
+                if (!name || !phone) {
+                    alert('Please enter your Name and Phone Number.');
+                    return;
+                }
+            }
+            if (step === 3) {
+                const specialty = document.getElementById('regSpecialty').value.trim();
+                if (!specialty) {
+                    alert('Please enter your Primary Specialty.');
+                    return;
+                }
+            }
+            currentStep = step;
+            document.querySelectorAll('.step-container').forEach(sc => sc.classList.remove('active'));
+            document.getElementById(`step${step}`).classList.add('active');
+
+            for (let i = 1; i <= 3; i++) {
+                const dot = document.getElementById(`dot${i}`);
+                dot.classList.remove('active', 'completed');
+                if (i < step) dot.classList.add('completed');
+                else if (i === step) dot.classList.add('active');
+            }
+            if (window.lucide) lucide.createIcons();
+        }
+
+        async function handleCookRegisterSubmit(e) {
+            e.preventDefault();
+            const name = document.getElementById('regName').value.trim();
+            const phone = document.getElementById('regPhone').value.trim();
+            const locality = document.getElementById('regLocality').value;
+            const specialty = document.getElementById('regSpecialty').value.trim();
+            const experience = document.getElementById('regExperience').value;
+            const rate = document.getElementById('regRate').value;
+            const avatar = document.getElementById('regAvatar').value.trim();
+
+            const dishes = [
+                document.getElementById('regDish1').value.trim(),
+                document.getElementById('regDish2').value.trim(),
+                document.getElementById('regDish3').value.trim()
+            ].filter(d => d !== '');
+
+            try {
+                const res = await fetch('/api/cooks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, phone, locality, specialty, experience, rate, avatar, dishes })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    closeModal('cookRegistrationModal');
+                    document.getElementById('cookRegisterForm').reset();
+                    goToStep(1);
+                    showToast(`Congratulations ${name}! You are registered on HomeChef Connect.`);
+                    fetchNearbyCooks(80.9462, 26.8467);
+                } else {
+                    alert(data.error || 'Failed to register cook.');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Server communication error.');
+            }
+        }
+
+        function executeSearch() {
+            const query = document.getElementById('searchInput').value.trim();
+            fetchNearbyCooks(80.9462, 26.8467, query);
+        }
+
+        async function fetchNearbyCooks(lng, lat, searchQuery = '') {
+            try {
+                let url = `/api/cooks/nearby?lng=${lng}&lat=${lat}&distance=15`;
+                if (searchQuery) {
+                    url += `&search=${encodeURIComponent(searchQuery)}`;
+                }
+                const response = await fetch(url);
+                let chefs = await response.json();
+
+                if (activeFilter === 'top') {
+                    chefs = chefs.filter(c => c.rating >= 4.8);
+                }
+
+                currentChefsData = chefs;
+
+                const gridContainer = document.querySelector('.chefs-grid');
+                const resultsTitle = document.getElementById('resultsTitle');
+                const resultsSub = document.getElementById('resultsSub');
+
+                gridContainer.innerHTML = ''; // Clear existing cards
+
+                if (searchQuery) {
+                    resultsTitle.textContent = `Search Results for "${searchQuery}"`;
+                    resultsSub.textContent = `Found ${chefs.length} matching chef(s) in Lucknow`;
+                } else {
+                    resultsTitle.textContent = `Nearby Chefs in Lucknow`;
+                    resultsSub.textContent = `Highly-rated culinary experts available around your location`;
+                }
+
+                if (chefs.length === 0) {
+                    gridContainer.innerHTML = `
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 48px 20px; background: white; border-radius: 20px;">
+                            <i data-lucide="search-x" style="width: 48px; height: 48px; color: var(--color-light-gray); margin-bottom: 12px;"></i>
+                            <h3 style="font-size: 18px; font-weight: 700; color: var(--color-dark);">No chefs found</h3>
+                            <p class="section-desc">Try searching for a different cuisine, dish, or locality.</p>
+                        </div>
+                    `;
+                    if (window.lucide) lucide.createIcons();
+                    return;
+                }
+
+                chefs.forEach(chef => {
+                    const dish1 = (chef.dishes && chef.dishes[0]) ? chef.dishes[0] : 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?auto=format&fit=crop&q=80&w=200&h=120';
+                    const dish2 = (chef.dishes && chef.dishes[1]) ? chef.dishes[1] : 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&q=80&w=200&h=120';
+                    const dish3 = (chef.dishes && chef.dishes[2]) ? chef.dishes[2] : 'https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?auto=format&fit=crop&q=80&w=200&h=120';
+
+                    gridContainer.innerHTML += `
+                        <div class="chef-card">
+                            <div class="card-profile-header">
+                                <div class="avatar-container">
+                                    <img src="${chef.avatar || 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&q=80&w=120&h=120'}" alt="${chef.name}" class="avatar-img" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&q=80&w=120&h=120';">
+                                    <span class="status-indicator"></span>
+                                </div>
+                                <div class="profile-meta">
+                                    <div class="name-rating-row">
+                                        <h3 class="chef-name">${chef.name}</h3>
+                                        <span class="rating-badge"><i data-lucide="star"></i> ${chef.rating}</span>
+                                    </div>
+                                    <p class="specialty-text">${chef.specialty}</p>
+                                    <div class="badges-row">
+                                        <span class="fssai-shield-badge"><i data-lucide="shield-check"></i> FSSAI</span>
+                                        <span class="hygiene-score-pill"><i data-lucide="sparkles"></i> ${chef.hygieneScore || 5.0} Hygiene</span>
+                                    </div>
+                                    <p class="exp-text"><i data-lucide="briefcase"></i> ${chef.experience} yrs exp • ${chef.locality}</p>
+                                </div>
+                            </div>
+                            <div class="dish-preview-gallery">
+                                <img src="${dish1}" alt="Dish preview 1" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=200&h=120';">
+                                <img src="${dish2}" alt="Dish preview 2" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=200&h=120';">
+                                <img src="${dish3}" alt="Dish preview 3" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&q=80&w=200&h=120';">
+                            </div>
+                            <div class="card-footer">
+                                <div class="pricing-info">
+                                    <span class="price-label">Rate Starts At</span>
+                                    <span class="price-amount">₹${chef.rate}<span class="unit">/hour</span></span>
+                                </div>
+                                <button class="btn-outline" onclick="openChefModal('${chef._id}')">View Profile</button>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                if (window.lucide) lucide.createIcons();
+            } catch (error) {
+                console.error("Frontend system rendering exception:", error);
+            }
+        }
+
+        async function openChefModal(chefId) {
+            const chef = currentChefsData.find(c => c._id === chefId);
+            if (!chef) return;
+            selectedChefForBooking = chef;
+
+            document.getElementById('modalChefAvatar').src = chef.avatar || 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&q=80&w=120&h=120';
+            document.getElementById('modalChefName').textContent = chef.name;
+            document.getElementById('modalChefRating').textContent = chef.rating;
+            document.getElementById('modalChefSpecialty').textContent = chef.specialty;
+            document.getElementById('modalChefExp').textContent = chef.experience;
+            document.getElementById('modalChefLocality').textContent = chef.locality;
+            document.getElementById('modalChefRate').innerHTML = `₹${chef.rate}<span class="unit">/hour</span>`;
+            document.getElementById('modalFssai').textContent = chef.fssaiNumber || 'Verified';
+            document.getElementById('modalHygiene').textContent = chef.hygieneScore || 5.0;
+
+            const galleryContainer = document.getElementById('modalDishGallery');
+            galleryContainer.innerHTML = '';
+            if (chef.dishes && chef.dishes.length > 0) {
+                chef.dishes.forEach(dishUrl => {
+                    galleryContainer.innerHTML += `<img src="${dishUrl}" alt="Signature Dish">`;
+                });
+            }
+
+            // Fetch Reviews for Chef
+            const reviewsContainer = document.getElementById('modalReviewsList');
+            reviewsContainer.innerHTML = '<p style="font-size:12px; color:var(--color-muted);">Loading reviews...</p>';
+            try {
+                const res = await fetch(`/api/reviews/cook/${chef._id}`);
+                const reviews = await res.json();
+                reviewsContainer.innerHTML = '';
+                if (reviews.length === 0) {
+                    reviewsContainer.innerHTML = '<p style="font-size:13px; color:var(--color-muted);">No reviews yet for this chef.</p>';
+                } else {
+                    reviews.forEach(r => {
+                        const tagsHtml = (r.tasteTags || []).map(t => `<span class="taste-tag-badge">🏷️ ${t}</span>`).join(' ');
+                        reviewsContainer.innerHTML += `
+                            <div class="review-card">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                                    <span style="font-weight:700; font-size:13px;">${r.customerName}</span>
+                                    <span class="rating-badge" style="font-size:11px;"><i data-lucide="star"></i> ${r.rating}.0</span>
+                                </div>
+                                <p style="font-size:13px; color:var(--color-dark); margin-bottom:6px;">"${r.comment}"</p>
+                                <div>${tagsHtml}</div>
+                            </div>
+                        `;
+                    });
+                }
+            } catch (err) {
+                reviewsContainer.innerHTML = '<p style="font-size:12px; color:var(--color-muted);">Reviews unavailable.</p>';
+            }
+
+            document.getElementById('modalBookNowBtn').onclick = () => {
+                closeModal('chefModal');
+                openBookingModal(chef);
+            };
+
+            document.getElementById('chefModal').classList.add('active');
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function selectBookingType(el, type) {
+            document.querySelectorAll('.booking-type-card').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('bookingTypeInput').value = type;
+        }
+
+        function openBookingModal(chef) {
+            selectedChefForBooking = chef;
+            document.getElementById('bookingCookId').value = chef._id;
+            document.getElementById('bookingChefName').textContent = chef.name;
+            
+            // Prefill user details if logged in
+            const userStr = localStorage.getItem('homechef_user');
+            if (userStr) {
+                const user = JSON.parse(userStr);
+                document.getElementById('custName').value = user.name;
+                document.getElementById('custPhone').value = user.email.match(/[0-9]{10}/) ? user.email : '';
+            }
+
+            document.getElementById('bookingModal').classList.add('active');
+            if (window.lucide) lucide.createIcons();
+        }
+
+        async function handleBookingSubmit(event) {
+            event.preventDefault();
+
+            const cookId = document.getElementById('bookingCookId').value;
+            const customerName = document.getElementById('custName').value.trim();
+            const customerPhone = document.getElementById('custPhone').value.trim();
+            const address = document.getElementById('custAddress').value.trim();
+            const proposedDate = document.getElementById('bookingDate').value;
+            const proposedTime = document.getElementById('bookingTime').value;
+            const instructions = document.getElementById('custInstructions').value.trim();
+            const bookingType = document.getElementById('bookingTypeInput').value;
+
+            try {
+                const response = await fetch('/api/conversations', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cookId, customerName, customerPhone, address, proposedDate, proposedTime, instructions, bookingType })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    closeModal('bookingModal');
+                    document.getElementById('bookingForm').reset();
+                    window.location.href = `chat.html?id=${data.conversationId}`;
+                } else {
+                    alert(data.error || 'Failed to initiate conversation.');
+                }
+            } catch (err) {
+                console.error('Inquiry submission error:', err);
+                alert('Connection error. Please try again.');
+            }
+        }
+
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toastNotification');
+            document.getElementById('toastMessage').textContent = msg;
+            toast.classList.add('active');
+            setTimeout(() => {
+                toast.classList.remove('active');
+            }, 3500);
+        }
+    </script>
+</body>
+
+</html>

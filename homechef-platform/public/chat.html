@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>In-App Chat & Negotiation - HomeChef Connect</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body>
+
+    <header class="site-header">
+        <div class="header-container">
+            <div class="logo-block" onclick="window.location.href='index.html'">
+                <div class="logo-icon">
+                    <i data-lucide="chef-hat"></i>
+                </div>
+                <div class="logo-text">
+                    <span class="logo-main">HomeChef</span>
+                    <span class="logo-sub">Connect</span>
+                </div>
+            </div>
+
+            <nav class="nav-links">
+                <a href="index.html" class="nav-item">Browse Cooks</a>
+                <a href="search.html" class="nav-item">Search</a>
+                <a href="chat.html" class="nav-item active">My Chats 💬</a>
+            </nav>
+
+            <div class="header-actions" id="headerActions">
+                <button class="btn-text" onclick="window.location.href='index.html'">Login / Sign Up</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="chat-container-page">
+        <!-- If no specific conversation ID selected, list active chats -->
+        <div id="chatsListContainer" style="display: none; background: white; border-radius: 24px; padding: 32px; border: 1px solid var(--border-soft);">
+            <h2 class="section-title mb-8" style="font-size: 24px;">My Active Negotiations</h2>
+            <div id="conversationsGrid" style="display: flex; flex-direction: column; gap: 16px;">
+                <!-- Active chat items populated here -->
+            </div>
+        </div>
+
+        <!-- Active Chat Frame -->
+        <div id="chatFrame" class="chat-card-frame" style="display: none;">
+            <!-- Negotiation Summary Bar -->
+            <div class="negotiation-summary-bar">
+                <div class="negotiation-chef-info">
+                    <img id="chatChefAvatar" src="" alt="Chef" class="negotiation-avatar">
+                    <div>
+                        <div class="negotiation-title" id="chatChefName">Chef Name</div>
+                        <div class="negotiation-sub" id="chatChefSpecialty">Specialty • Locality</div>
+                    </div>
+                </div>
+
+                <div class="negotiation-pills">
+                    <div class="summary-pill">
+                        <i data-lucide="layers"></i> <span id="chatBookingType">One-Time Service</span>
+                    </div>
+                    <div class="summary-pill">
+                        <i data-lucide="calendar"></i> <span id="chatDate">Date</span>
+                    </div>
+                    <div class="summary-pill">
+                        <i data-lucide="clock"></i> <span id="chatTime">Time</span>
+                    </div>
+                    <div class="summary-pill">
+                        <i data-lucide="tag"></i> <span id="chatRate">Rate</span>
+                    </div>
+                    <div class="status-badge-pill negotiating" id="chatStatusBadge">
+                        Negotiating
+                    </div>
+                </div>
+            </div>
+
+            <!-- Platform Commission Fee Breakdown Bar -->
+            <div style="background: #fffdf5; border-bottom: 1px dashed #fcd34d; padding: 10px 24px;">
+                <div class="fee-breakdown-panel">
+                    <div class="fee-row">
+                        <span>Chef Agreed Rate:</span>
+                        <strong id="feeChefRate">₹200 / hr</strong>
+                    </div>
+                    <div class="fee-row">
+                        <span>Platform Escrow Service Fee (10%):</span>
+                        <strong id="feePlatformAmount">₹20</strong>
+                    </div>
+                    <div class="fee-row total">
+                        <span>Total Escrow Payable Amount:</span>
+                        <strong id="feeTotalPayable" style="color: var(--primary-amber); font-size: 14px;">₹220</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- OTP & Escrow Banner -->
+            <div id="otpBanner" class="otp-display-box" style="display: none;">
+                <div>
+                    <div style="font-size: 11px; opacity: 0.9; text-transform: uppercase;">Customer Verification OTP (Share with Chef upon arrival)</div>
+                    <div class="otp-code-val" id="otpCodeValue">----</div>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn-chip-action" style="background: white; color: #047857;" onclick="openModal('otpModal')">
+                        <i data-lucide="key-round"></i> Start Cooking (Enter OTP)
+                    </button>
+                </div>
+            </div>
+
+            <div id="inProgressBanner" class="otp-display-box" style="display: none; background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+                <div>
+                    <div style="font-size: 11px; opacity: 0.9; text-transform: uppercase;">Cooking Session Status</div>
+                    <div style="font-size: 16px; font-weight: 800;" id="inProgressText">🔥 Cooking In Progress (Funds Held in Escrow)</div>
+                </div>
+                <button class="btn-chip-action" style="background: white; color: #1d4ed8;" onclick="completeCookingSession()">
+                    <i data-lucide="check-circle"></i> Complete Job & Release Funds
+                </button>
+            </div>
+
+            <!-- Messages Feed -->
+            <div class="chat-messages-feed" id="messagesFeed">
+                <!-- Chat bubbles rendered dynamically -->
+            </div>
+
+            <!-- Quick Negotiation Action Toolbar -->
+            <div class="chat-action-toolbar">
+                <button class="btn-chip-action" onclick="openModal('ingredientModal')">
+                    🛒 Ingredient Checklist
+                </button>
+                <button class="btn-chip-action" onclick="proposeNewTiming()">
+                    <i data-lucide="clock"></i> Propose New Time/Date
+                </button>
+                <button class="btn-chip-action" onclick="proposeNewRate()">
+                    <i data-lucide="indian-rupee"></i> Propose Rate
+                </button>
+                <button class="btn-chip-action highlight" id="lockAgreementBtn" onclick="lockAgreement()">
+                    <i data-lucide="lock"></i> Confirm & Lock Agreement
+                </button>
+            </div>
+
+            <!-- Message Input Bar -->
+            <form class="chat-input-container" onsubmit="handleSendMessage(event)">
+                <input type="text" id="msgInput" placeholder="Type your message or custom instructions..." required autocomplete="off">
+                <button type="submit" class="btn-search" style="padding: 12px 20px;">
+                    Send <i data-lucide="send"></i>
+                </button>
+            </form>
+        </div>
+    </main>
+
+    <!-- Ingredient Checklist Custom Modal -->
+    <div class="modal-overlay" id="ingredientModal">
+        <div class="modal-card" style="max-width: 500px;">
+            <button class="modal-close-btn" onclick="closeModal('ingredientModal')">
+                <i data-lucide="x"></i>
+            </button>
+            <h2 class="section-title mb-8" style="font-size: 20px; text-align: center;">Generate Ingredient Checklist 🛒</h2>
+            <form id="ingredientForm" class="booking-form" onsubmit="handleChecklistSubmit(event)">
+                <div class="form-group">
+                    <label for="ingredientRawInput">Required Ingredients & Quantities (comma-separated)</label>
+                    <textarea id="ingredientRawInput" rows="3" placeholder="e.g. 500g Paneer, 200ml Mustard Oil, 1kg Basmati Rice, 250g Tomatoes" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Who Supplies These Ingredients?</label>
+                    <div style="display: flex; gap: 16px; margin-top: 6px;">
+                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; font-weight: 700;">
+                            <input type="radio" name="supplierOption" value="Customer Supplies" checked> Customer Supplies
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; font-weight: 700;">
+                            <input type="radio" name="supplierOption" value="Chef Brings"> Chef Brings
+                        </label>
+                    </div>
+                </div>
+                <div class="step-actions">
+                    <button type="button" class="btn-outline" onclick="closeModal('ingredientModal')">Cancel</button>
+                    <button type="submit" class="btn-search">Send Checklist to Chat <i data-lucide="send"></i></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- OTP Verification Modal for Chef -->
+    <div class="modal-overlay" id="otpModal">
+        <div class="modal-card" style="max-width: 400px; text-align: center;">
+            <button class="modal-close-btn" onclick="closeModal('otpModal')">
+                <i data-lucide="x"></i>
+            </button>
+            <div style="background: #ecfdf5; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; color: #059669;">
+                <i data-lucide="key-round" style="width: 30px; height: 30px;"></i>
+            </div>
+            <h2 class="section-title mb-8" style="font-size: 20px;">Enter Customer OTP</h2>
+            <p style="font-size: 13px; color: var(--color-muted); margin-bottom: 16px;">Ask the customer for their 4-digit verification code to start cooking.</p>
+            <form onsubmit="handleOtpVerificationSubmit(event)" class="booking-form">
+                <div class="form-group">
+                    <input type="text" id="otpInputCode" placeholder="Enter 4-digit OTP" maxlength="4" style="font-size: 22px; letter-spacing: 6px; text-align: center; font-weight: 800;" required>
+                </div>
+                <div class="step-actions" style="margin-top: 0;">
+                    <button type="button" class="btn-outline" onclick="closeModal('otpModal')">Cancel</button>
+                    <button type="submit" class="btn-search highlight" style="background: #059669; border-color: #059669;">Verify & Start <i data-lucide="play"></i></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Post-Service Review Modal -->
+    <div class="modal-overlay" id="reviewModal">
+        <div class="modal-card" style="max-width: 480px;">
+            <button class="modal-close-btn" onclick="closeModal('reviewModal')">
+                <i data-lucide="x"></i>
+            </button>
+            <h2 class="section-title mb-8" style="font-size: 22px; text-align: center;">Leave a Review & Taste Rating ⭐</h2>
+            <form id="reviewForm" class="booking-form" onsubmit="handleReviewSubmit(event)">
+                <div class="form-group">
+                    <label for="revRating">Rating (1 to 5 Stars)</label>
+                    <select id="revRating" required style="font-size: 16px; font-weight: 800;">
+                        <option value="5" selected>⭐⭐⭐⭐⭐ (5.0 - Exceptional)</option>
+                        <option value="4">⭐⭐⭐⭐ (4.0 - Very Good)</option>
+                        <option value="3">⭐⭐⭐ (3.0 - Good)</option>
+                        <option value="2">⭐⭐ (2.0 - Average)</option>
+                        <option value="1">⭐ (1.0 - Poor)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="revComment">Dish & Service Feedback</label>
+                    <textarea id="revComment" rows="3" placeholder="How was the taste, hygiene, and punctual arrival of your chef?" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Select Taste Tags</label>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px;" id="tasteTagsContainer">
+                        <span class="taste-tag-badge active" onclick="toggleTasteTag(this, 'Perfect Spice Balance')">🏷️ Perfect Spice Balance</span>
+                        <span class="taste-tag-badge" onclick="toggleTasteTag(this, 'Healthy & Less Oil')">🏷️ Healthy & Less Oil</span>
+                        <span class="taste-tag-badge" onclick="toggleTasteTag(this, 'Authentic Flavor')">🏷️ Authentic Flavor</span>
+                        <span class="taste-tag-badge" onclick="toggleTasteTag(this, 'Punctual & Clean')">🏷️ Punctual & Clean</span>
+                    </div>
+                </div>
+                <div class="step-actions">
+                    <button type="button" class="btn-outline" onclick="closeModal('reviewModal')">Skip</button>
+                    <button type="submit" class="btn-search">Submit Review <i data-lucide="star"></i></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Rate Proposal Custom Modal -->
+    <div class="modal-overlay" id="rateModal">
+        <div class="modal-card" style="max-width: 420px;">
+            <button class="modal-close-btn" onclick="closeModal('rateModal')">
+                <i data-lucide="x"></i>
+            </button>
+            <h2 class="section-title mb-8" style="font-size: 20px; text-align: center;">Propose Hourly Rate</h2>
+            <form id="rateForm" class="booking-form" onsubmit="handleRateSubmit(event)">
+                <div class="form-group">
+                    <label for="newRateInput">Proposed Hourly Rate (₹)</label>
+                    <div style="position: relative; display: flex; align-items: center;">
+                        <span style="position: absolute; left: 14px; font-weight: 800; color: var(--primary-amber); font-size: 16px;">₹</span>
+                        <input type="number" id="newRateInput" placeholder="250" min="50" step="10" style="padding-left: 32px;" required>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
+                    <span class="filter-chip" onclick="setRateChip(200)">₹200</span>
+                    <span class="filter-chip" onclick="setRateChip(250)">₹250</span>
+                    <span class="filter-chip" onclick="setRateChip(300)">₹300</span>
+                    <span class="filter-chip" onclick="setRateChip(350)">₹350</span>
+                </div>
+                <div class="step-actions">
+                    <button type="button" class="btn-outline" onclick="closeModal('rateModal')">Cancel</button>
+                    <button type="submit" class="btn-search">Send Proposed Rate <i data-lucide="send"></i></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Time/Date Proposal Custom Modal -->
+    <div class="modal-overlay" id="timeModal">
+        <div class="modal-card" style="max-width: 460px;">
+            <button class="modal-close-btn" onclick="closeModal('timeModal')">
+                <i data-lucide="x"></i>
+            </button>
+            <h2 class="section-title mb-8" style="font-size: 20px; text-align: center;">Propose New Schedule</h2>
+            <form id="timeForm" class="booking-form" onsubmit="handleTimeSubmit(event)">
+                <div class="form-group">
+                    <label for="newDateInput">Proposed Date</label>
+                    <input type="date" id="newDateInput" required>
+                </div>
+                <div class="form-group">
+                    <label for="newTimeInput">Preferred Time Window</label>
+                    <select id="newTimeInput" required>
+                        <option value="Breakfast (8:00 AM - 10:00 AM)">Breakfast (8:00 - 10:00 AM)</option>
+                        <option value="Lunch (12:00 PM - 2:30 PM)" selected>Lunch (12:00 - 2:30 PM)</option>
+                        <option value="Dinner (7:00 PM - 9:30 PM)">Dinner (7:00 - 9:30 PM)</option>
+                    </select>
+                </div>
+                <div class="step-actions">
+                    <button type="button" class="btn-outline" onclick="closeModal('timeModal')">Cancel</button>
+                    <button type="submit" class="btn-search">Send Proposed Schedule <i data-lucide="send"></i></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Confirm & Lock Agreement Modal -->
+    <div class="modal-overlay" id="confirmLockModal">
+        <div class="modal-card" style="max-width: 440px; text-align: center;">
+            <button class="modal-close-btn" onclick="closeModal('confirmLockModal')">
+                <i data-lucide="x"></i>
+            </button>
+            <div style="background: #ecfdf5; width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; color: #059669;">
+                <i data-lucide="lock" style="width: 32px; height: 32px;"></i>
+            </div>
+            <h2 class="section-title mb-8" style="font-size: 22px;">Confirm & Lock Agreement</h2>
+            <p style="font-size: 14px; color: var(--color-muted); margin-bottom: 20px; line-height: 1.5;" id="lockSummaryText">
+                Lock in booking reservation with Chef for specified date and rate.
+            </p>
+            <div class="step-actions" style="margin-top: 0;">
+                <button type="button" class="btn-outline" style="flex: 1;" onclick="closeModal('confirmLockModal')">Cancel</button>
+                <button type="button" class="btn-search highlight" style="flex: 1; background: #059669; border-color: #059669;" onclick="executeLockAgreement()">
+                    Confirm & Lock <i data-lucide="check"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast-notification" id="toastNotification">
+        <i data-lucide="check-circle"></i>
+        <span id="toastMessage">Action completed!</span>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+
+    <script>
+        let conversationId = null;
+        let currentConversationData = null;
+        let pollTimer = null;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            renderHeaderAuthState();
+
+            const urlParams = new URLSearchParams(window.location.search);
+            conversationId = urlParams.get('id');
+
+            if (conversationId) {
+                document.getElementById('chatFrame').style.display = 'flex';
+                document.getElementById('chatsListContainer').style.display = 'none';
+                loadConversationThread();
+                pollTimer = setInterval(loadConversationThread, 3000);
+            } else {
+                document.getElementById('chatFrame').style.display = 'none';
+                document.getElementById('chatsListContainer').style.display = 'block';
+                loadConversationsList();
+            }
+        });
+
+        function renderHeaderAuthState() {
+            const userStr = localStorage.getItem('homechef_user');
+            const actionsContainer = document.getElementById('headerActions');
+            if (userStr) {
+                const user = JSON.parse(userStr);
+                const firstName = user.name.split(' ')[0] || user.name;
+                actionsContainer.innerHTML = `
+                    <div class="user-profile-badge">
+                        <span class="user-avatar-sm">${firstName.charAt(0).toUpperCase()}</span>
+                        <span>Hi, ${firstName} 👤</span>
+                    </div>
+                    <button class="btn-text" onclick="handleLogout()">Logout 🚪</button>
+                `;
+            } else {
+                actionsContainer.innerHTML = `
+                    <a href="index.html" class="btn-search" style="padding: 8px 16px; font-size: 13px; text-decoration: none;">Login / Sign Up</a>
+                `;
+            }
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('homechef_user');
+            window.location.href = 'index.html';
+        }
+
+        async function loadConversationsList() {
+            try {
+                const res = await fetch('/api/conversations');
+                const list = await res.json();
+
+                const grid = document.getElementById('conversationsGrid');
+                grid.innerHTML = '';
+
+                if (list.length === 0) {
+                    grid.innerHTML = `<p class="section-desc">You have no active chef inquiries yet. Browse chefs to start a discussion!</p>`;
+                    return;
+                }
+
+                list.forEach(item => {
+                    const cook = item.cookId || {};
+                    const isAgreed = item.status === 'Agreed';
+                    grid.innerHTML += `
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; border: 1px solid var(--border-soft); border-radius: 18px; cursor: pointer; transition: background 0.2s;" onclick="window.location.href='chat.html?id=${item._id}'">
+                            <div style="display: flex; align-items: center; gap: 16px;">
+                                <img src="${cook.avatar || 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&q=80&w=120&h=120'}" style="width: 54px; height: 54px; border-radius: 16px; object-fit: cover;">
+                                <div>
+                                    <h4 style="font-size: 16px; font-weight: 800; color: var(--color-dark);">${cook.name || 'Chef'}</h4>
+                                    <p style="font-size: 13px; color: var(--color-muted);">${item.proposedDate} • ${item.proposedTime} • ${cook.locality || ''}</p>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="status-badge-pill ${isAgreed ? 'agreed' : 'negotiating'}">${item.status}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function loadConversationThread() {
+            try {
+                const res = await fetch(`/api/conversations/${conversationId}`);
+                if (!res.ok) return;
+
+                const { conversation, messages } = await res.json();
+                currentConversationData = conversation;
+
+                const cook = conversation.cookId || {};
+                document.getElementById('chatChefAvatar').src = cook.avatar || 'https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&q=80&w=120&h=120';
+                document.getElementById('chatChefName').textContent = cook.name || 'Chef';
+                document.getElementById('chatChefSpecialty').textContent = `${cook.specialty || 'Cuisine'} • ${cook.locality || 'Lucknow'}`;
+                document.getElementById('chatDate').textContent = conversation.proposedDate;
+                document.getElementById('chatTime').textContent = conversation.proposedTime;
+                document.getElementById('chatRate').textContent = `₹${conversation.agreedPrice || cook.rate}/hr`;
+                document.getElementById('chatBookingType').textContent = conversation.bookingType || 'One-Time Meal';
+
+                // Calculate Platform Fee Breakdown
+                const baseRate = conversation.agreedPrice || cook.rate || 200;
+                const platformFee = Math.round(baseRate * 0.10);
+                const totalFee = baseRate + platformFee;
+                document.getElementById('feeChefRate').textContent = `₹${baseRate} / hr`;
+                document.getElementById('feePlatformAmount').textContent = `₹${platformFee}`;
+                document.getElementById('feeTotalPayable').textContent = `₹${totalFee}`;
+
+                const badge = document.getElementById('chatStatusBadge');
+                const otpBanner = document.getElementById('otpBanner');
+                const inProgressBanner = document.getElementById('inProgressBanner');
+                const lockBtn = document.getElementById('lockAgreementBtn');
+
+                if (conversation.status === 'Agreed') {
+                    badge.textContent = '🔒 Escrow Held';
+                    badge.className = 'status-badge-pill agreed';
+                    otpBanner.style.display = 'flex';
+                    inProgressBanner.style.display = 'none';
+                    document.getElementById('otpCodeValue').textContent = conversation.otpCode || '----';
+                    if (lockBtn) lockBtn.style.display = 'none';
+                } else if (conversation.status === 'In Progress') {
+                    badge.textContent = '🔥 In Progress';
+                    badge.className = 'status-badge-pill negotiating';
+                    otpBanner.style.display = 'none';
+                    inProgressBanner.style.display = 'flex';
+                    if (lockBtn) lockBtn.style.display = 'none';
+                } else if (conversation.status === 'Completed') {
+                    badge.textContent = '✨ Completed';
+                    badge.className = 'status-badge-pill agreed';
+                    otpBanner.style.display = 'none';
+                    inProgressBanner.style.display = 'none';
+                    if (lockBtn) lockBtn.style.display = 'none';
+                } else {
+                    badge.textContent = 'Negotiating';
+                    badge.className = 'status-badge-pill negotiating';
+                    otpBanner.style.display = 'none';
+                    inProgressBanner.style.display = 'none';
+                    if (lockBtn) lockBtn.style.display = 'inline-flex';
+                }
+
+                // Render Messages Feed
+                const feed = document.getElementById('messagesFeed');
+                feed.innerHTML = '';
+
+                messages.forEach(msg => {
+                    const timeStr = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    if (msg.sender === 'system') {
+                        feed.innerHTML += `
+                            <div class="chat-bubble-row system">
+                                <div class="msg-bubble">${msg.text}</div>
+                            </div>
+                        `;
+                    } else if (msg.type === 'checklist') {
+                        let itemsHtml = '';
+                        (msg.checklist || []).forEach(c => {
+                            itemsHtml += `
+                                <div class="ingredient-item-row">
+                                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                                        <input type="checkbox" ${c.checked ? 'checked' : ''}>
+                                        <span>${escapeHtml(c.item)}</span>
+                                    </label>
+                                    <span class="supplier-badge ${c.supplier === 'Chef Brings' ? 'chef' : 'customer'}">${c.supplier}</span>
+                                </div>
+                            `;
+                        });
+                        feed.innerHTML += `
+                            <div class="chat-bubble-row ${msg.sender}">
+                                <span class="msg-sender-label">${msg.sender === 'customer' ? 'You (' + conversation.customerName + ')' : (cook.name || 'Chef')}</span>
+                                <div class="ingredient-card-msg">
+                                    <div style="font-weight:800; font-size:14px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+                                        <span>🛒 Ingredient Checklist</span>
+                                        <button class="btn-chip-action" style="padding:4px 10px; font-size:11px;" onclick="copyChecklist('${escapeHtml(msg.text)}')">Copy List</button>
+                                    </div>
+                                    <div>${itemsHtml}</div>
+                                </div>
+                                <span class="msg-timestamp">${timeStr}</span>
+                            </div>
+                        `;
+                    } else if (msg.sender === 'customer') {
+                        feed.innerHTML += `
+                            <div class="chat-bubble-row customer">
+                                <span class="msg-sender-label">You (${conversation.customerName})</span>
+                                <div class="msg-bubble">${escapeHtml(msg.text)}</div>
+                                <span class="msg-timestamp">${timeStr}</span>
+                            </div>
+                        `;
+                    } else {
+                        feed.innerHTML += `
+                            <div class="chat-bubble-row chef">
+                                <span class="msg-sender-label">${cook.name || 'Chef'}</span>
+                                <div class="msg-bubble">${escapeHtml(msg.text)}</div>
+                                <span class="msg-timestamp">${timeStr}</span>
+                            </div>
+                        `;
+                    }
+                });
+
+                feed.scrollTop = feed.scrollHeight;
+                if (window.lucide) lucide.createIcons();
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function handleSendMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById('msgInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            input.value = '';
+
+            try {
+                await fetch(`/api/conversations/${conversationId}/messages`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sender: 'customer', text })
+                });
+                loadConversationThread();
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function handleChecklistSubmit(e) {
+            e.preventDefault();
+            const rawText = document.getElementById('ingredientRawInput').value.trim();
+            if (!rawText) return;
+
+            const supplier = document.querySelector('input[name="supplierOption"]:checked').value;
+            const items = rawText.split(',').map(s => s.trim()).filter(s => s !== '');
+            
+            const checklist = items.map(item => ({ item, supplier, checked: false }));
+
+            closeModal('ingredientModal');
+
+            try {
+                await fetch(`/api/conversations/${conversationId}/messages`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sender: 'customer',
+                        text: `Ingredient Checklist: ${items.join(', ')} (${supplier})`,
+                        type: 'checklist',
+                        checklist
+                    })
+                });
+                document.getElementById('ingredientForm').reset();
+                loadConversationThread();
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function copyChecklist(str) {
+            navigator.clipboard.writeText(str);
+            showToast('📋 Shopping list copied to clipboard!');
+        }
+
+        async function handleOtpVerificationSubmit(e) {
+            e.preventDefault();
+            const verifyOtp = document.getElementById('otpInputCode').value.trim();
+            if (!verifyOtp || verifyOtp.length !== 4) {
+                alert('Please enter a valid 4-digit OTP.');
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/conversations/${conversationId}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ verifyOtp })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    closeModal('otpModal');
+                    showToast('🚀 OTP Verified! Session Started.');
+                    loadConversationThread();
+                } else {
+                    alert(data.error || 'Invalid OTP.');
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function completeCookingSession() {
+            if (!confirm('Are you sure you want to complete the cooking session and release escrow funds to the chef?')) return;
+
+            try {
+                await fetch(`/api/conversations/${conversationId}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'Completed' })
+                });
+
+                showToast('✨ Service Completed & Escrow Funds Released!');
+                openModal('reviewModal');
+                loadConversationThread();
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function toggleTasteTag(el, tag) {
+            el.classList.toggle('active');
+        }
+
+        async function handleReviewSubmit(e) {
+            e.preventDefault();
+            if (!currentConversationData) return;
+
+            const rating = Number(document.getElementById('revRating').value);
+            const comment = document.getElementById('revComment').value.trim();
+            const cookId = currentConversationData.cookId ? currentConversationData.cookId._id : null;
+            const customerName = currentConversationData.customerName || 'Customer';
+
+            const selectedTags = [];
+            document.querySelectorAll('#tasteTagsContainer .taste-tag-badge.active').forEach(el => {
+                selectedTags.push(el.textContent.replace('🏷️ ', '').trim());
+            });
+
+            closeModal('reviewModal');
+
+            try {
+                const res = await fetch('/api/reviews', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cookId, customerName, rating, comment, tasteTags: selectedTags })
+                });
+                if (res.ok) {
+                    showToast('⭐ Thank you for your review!');
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function proposeNewRate() {
+            if (!currentConversationData) return;
+            document.getElementById('newRateInput').value = currentConversationData.agreedPrice || (currentConversationData.cookId ? currentConversationData.cookId.rate : 200);
+            openModal('rateModal');
+        }
+
+        function setRateChip(val) {
+            document.getElementById('newRateInput').value = val;
+        }
+
+        async function handleRateSubmit(e) {
+            e.preventDefault();
+            const newRate = Number(document.getElementById('newRateInput').value);
+            if (!newRate || newRate < 50) return;
+
+            closeModal('rateModal');
+
+            try {
+                await fetch(`/api/conversations/${conversationId}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ agreedPrice: newRate })
+                });
+
+                const text = `I would like to propose an agreed hourly rate of ₹${newRate}/hour for our session.`;
+                await fetch(`/api/conversations/${conversationId}/messages`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sender: 'customer', text })
+                });
+
+                showToast(`Proposed rate updated to ₹${newRate}/hr`);
+                loadConversationThread();
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function proposeNewTiming() {
+            if (!currentConversationData) return;
+            document.getElementById('newDateInput').value = currentConversationData.proposedDate || '';
+            document.getElementById('newTimeInput').value = currentConversationData.proposedTime || 'Lunch (12:00 PM - 2:30 PM)';
+            openModal('timeModal');
+        }
+
+        async function handleTimeSubmit(e) {
+            e.preventDefault();
+            const proposedDate = document.getElementById('newDateInput').value;
+            const proposedTime = document.getElementById('newTimeInput').value;
+            if (!proposedDate || !proposedTime) return;
+
+            closeModal('timeModal');
+
+            try {
+                await fetch(`/api/conversations/${conversationId}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ proposedDate, proposedTime })
+                });
+
+                const text = `I would like to propose a new schedule: ${proposedDate} during ${proposedTime}. Does this work for you?`;
+                await fetch(`/api/conversations/${conversationId}/messages`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sender: 'customer', text })
+                });
+
+                showToast('Proposed schedule updated!');
+                loadConversationThread();
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function lockAgreement() {
+            if (!currentConversationData) return;
+            const cookName = currentConversationData.cookId ? currentConversationData.cookId.name : 'Chef';
+            const rate = currentConversationData.agreedPrice || (currentConversationData.cookId ? currentConversationData.cookId.rate : 200);
+
+            document.getElementById('lockSummaryText').innerHTML = `
+                You are locking the agreement with <strong>${cookName}</strong> for <strong>${currentConversationData.proposedDate}</strong> (${currentConversationData.proposedTime}) at <strong>₹${rate}/hour</strong>.
+            `;
+            openModal('confirmLockModal');
+        }
+
+        async function executeLockAgreement() {
+            closeModal('confirmLockModal');
+            try {
+                await fetch(`/api/conversations/${conversationId}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'Agreed' })
+                });
+
+                showToast('🎉 Agreement Locked & Booking Confirmed!');
+                loadConversationThread();
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.innerText = text;
+            return div.innerHTML;
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toastNotification');
+            document.getElementById('toastMessage').textContent = msg;
+            toast.classList.add('active');
+            setTimeout(() => {
+                toast.classList.remove('active');
+            }, 3500);
+        }
+    </script>
+</body>
+
+</html>
